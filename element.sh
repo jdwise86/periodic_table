@@ -12,22 +12,36 @@ MAIN_MENU() {
   fi
 
   echo "Please provide an element as an argument."
-  read ELEMENT_NAME
+  read INPUT
+
+  PRINT_ELEMENT "$INPUT"
+}
+
+PRINT_ELEMENT() {
+  INPUT=$1
+  if [[ ! $INPUT =~ ^[0-9]+$ ]]; then
+    ATOMIC_NUMBER=$(echo $($PSQL "SELECT atomic_number FROM elements WHERE symbol='$INPUT' OR name='$INPUT';") | sed 's/ //g')
+  else
+    ATOMIC_NUMBER=$INPUT
+  fi
 
   # Get element data
   ELEMENT=$($PSQL "SELECT atomic_number, symbol, name, type, atomic_mass, melting_point_celsius, boiling_point_celsius 
                    FROM elements 
                    JOIN properties USING(atomic_number) 
                    JOIN types USING(type_id) 
-                   WHERE atomic_number::TEXT = '$ELEMENT_NAME' 
-                   OR symbol = '$ELEMENT_NAME' 
-                   OR name = '$ELEMENT_NAME';")
+                   WHERE atomic_number::TEXT = '$ATOMIC_NUMBER' 
+                   OR symbol = '$INPUT' 
+                   OR name = '$INPUT';")
 
   # Check if element exists
   if [[ -z $ELEMENT ]]; then
     echo -e "\nI don't have a record for that element, what's the symbol for this element?"
     read SYMBOL_NAME
-    
+
+    echo -e "\nWhat is its name?"
+    read ELEMENT_NAME
+
     echo -e "\nWhat is its atomic number?"
     read ATOMIC_NUMBER
 
