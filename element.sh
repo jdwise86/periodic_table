@@ -36,11 +36,13 @@ PRINT_ELEMENT() {
 
   # Check if element exists
   if [[ -z $ELEMENT ]]; then
-    echo -e "\nI don't have a record for that element, what's the symbol for this element?"
-    read SYMBOL_NAME
+    echo -e "\nI don't have a record for that element."
+
+    echo -e "\nwhat's the symbol for this element?"
+    read SYMBOL
 
     echo -e "\nWhat is its name?"
-    read ELEMENT_NAME
+    read NAME
 
     echo -e "\nWhat is its atomic number?"
     read ATOMIC_NUMBER
@@ -61,11 +63,18 @@ PRINT_ELEMENT() {
     METAL_TYPE_ID=$($PSQL "SELECT type_id FROM types WHERE type = '$METAL_TYPE';")
 
     # Insert new element
-    INSERT_SYMBOL_RESULT=$($PSQL "INSERT INTO elements(atomic_number, name, symbol) VALUES('$ATOMIC_NUMBER', '$ELEMENT_NAME', '$SYMBOL_NAME');")
+    INSERT_SYMBOL_RESULT=$($PSQL "INSERT INTO elements(atomic_number, name, symbol) VALUES('$ATOMIC_NUMBER', '$NAME', '$SYMBOL');")
 
     # Insert element properties
     INSERT_PROPERTIES_RESULT=$($PSQL "INSERT INTO properties(atomic_number, atomic_mass, melting_point_celsius, boiling_point_celsius, type_id) 
                                       VALUES('$ATOMIC_NUMBER', '$ATOMIC_MASS', '$MELTING_POINT', '$BOILING_POINT', '$METAL_TYPE_ID');")
+  
+     # **Fetch the newly inserted element data*
+  ELEMENT=$($PSQL "SELECT atomic_number, symbol, name, type, atomic_mass, melting_point_celsius, boiling_point_celsius 
+                     FROM elements 
+                     JOIN properties USING(atomic_number) 
+                     JOIN types USING(type_id) 
+                     WHERE atomic_number = '$ATOMIC_NUMBER';")
   fi
 
   # Parse the query result into variables
